@@ -15,7 +15,7 @@ class Blockchain(object):
         # create the genesis Block - Block with no predecessors
         self.new_block(previous_hash=1, proof=100)
 
-    def new_block(self):
+    def new_block(self, proof, previous_hash=None):
         """
             Creates a new Block and adds it to the Chain
             Arguments:
