@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, request, abort
-from blockchain.blockchain import Blockchain
-import json
+from blockchain import Blockchain
 
 # Instantiate our Node
 app = Flask(__name__)

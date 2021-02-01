@@ -1,55 +1,68 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-from datetime import datetime
+from __future__ import annotations
 from hashlib import sha256
+from blockchain.utils import hashMatchesDifficulty
 
 class Block:
 
-    def __init__(self, index: int, data: str, previousHash: str):
+    def __init__(self, index: int, data: str,  timestamp: float,
+        previousHash: str, blockHash: str, difficulty: int, nonce: int):
 
         self.index = index
         self.previousHash = previousHash
-        self.timestamp = str(datetime.now())
+        self.timestamp = timestamp 
         self.data = data
-        self.hash = self.generateHash()
+        self.hash = blockHash
+        self.difficulty = difficulty
+        self.nonce = nonce
+
         self.content = {
             "index": self.index,
             "timestamp": self.timestamp,
             "data": self.data,
             "hash": self.hash,
-            "previousHash": self.previousHash
+            "previousHash": self.previousHash,
+            "difficulty": self.difficulty,
+            "nonce": self.nonce
         }
 
     def __str__(self):
         return f"Block({self.content})"
 
-    def generateHash(self):
-        msg = str(self.index) + self.timestamp + \
-            self.data + self.previousHash
+    @staticmethod
+    def calculateHash(index: int, previousHash: str, timestamp: float, 
+        data: str, difficulty: int, nonce: int) -> str:
+        msg = str(index) + str(timestamp) + data + \
+            previousHash + str(difficulty) + str(nonce)
             
         return sha256(msg.encode('utf-8')).hexdigest()
 
-    @staticmethod
-    def genesisBlock():
-        return Block(
+    @classmethod
+    def genesisBlock(cls) -> Block:
+        return cls(
             index = 0, 
-            data = "I'm the genesis Block",
-            previousHash = "0")
+            blockHash = '91a73664bc84c0baa1fc75ea6e4aa6d1d20c5df664c724e3159aefc2e1186627',
+            previousHash = '', 
+            timestamp = 1465154705, 
+            data = 'my genesis block!!', 
+            difficulty = 0, 
+            nonce = 0)
 
-# utils block functions
-def isValidNewBlock(previousBlock: Block, newBlock: Block) -> bool:
-    if previousBlock.index + 1 != newBlock.index:
-        #print("Invalid index Block")
-        return False
-    if previousBlock.hash != newBlock.previousHash:
-        #print("Invalid previous hash")
-        return False
-    return True
-
-
-if __name__ == '__main__':
-    b0 = Block.genesisBlock()
-    print(b0)
-    print(type(b0.hash))
-    
+    @classmethod
+    def findBlock(cls, index: int, data: str, previousHash: str, 
+        timestamp: float, difficulty: int) -> Block:
+        """Find hash for block given difficulty, iterate over nonce
+        to obtain the hash that matches difficulty 
+        Args:
+            - Parameters to create a single block
+        Returns:
+            - Block
+        """
+        nonce = 0
+        while True:
+            hashOfNonce = Block.calculateHash(index, previousHash, 
+                timestamp, data, difficulty, nonce)
+            if hashMatchesDifficulty(hashOfNonce, difficulty):
+                return cls(index, data, timestamp, previousHash, hashOfNonce, difficulty, nonce)
+            nonce += 1
